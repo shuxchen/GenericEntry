@@ -477,8 +477,9 @@ generic <- generic %>%
 ##Only look at between 2007-10-01 and 2017-09-31
 #in specific, first generic need to be after 2007-10-01
 #while all need to be before 2017-10-01
+#also need to restrict to index date on or after 2007-10-01; will update in PC and noPC files
 generic1_index <- generic %>% group_by(index) %>% filter(order == 1 & numdate > 20071000) %>% select(index)
 generic <- inner_join(generic, generic1_index)
 
 generic <- generic %>% 
-  filter(numdate < 20171001 & numdate > 20071001)
+  filter(numdate < 20171001)

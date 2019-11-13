@@ -25,9 +25,17 @@ genericnoPIV<-generic %>% group_by(index) %>% filter(all(PIV==0))
 #  group_by(index) %>%
 #  mutate(order = rank(numdate,ties.method="first"))
 
+#add restrict for index date >= 20071001
+genericPIV <- genericPIV %>% 
+  group_by(index) %>% 
+  fill(min) %>% 
+  fill(min, .direction = "up")
+
+genericnoPIV <- genericnoPIV %>%
+  filter(min >= "2007-10-01")
+
 #Calculate lag time using earliest patent
 genericnoPIV$lag <- as.Date(genericnoPIV$date)-as.Date(genericnoPIV$min)
-
 
 firstnoPIV <- genericnoPIV %>% filter(order == 1)
 sum(is.na(firstnoPIV$min))/nrow(firstnoPIV)
@@ -78,13 +86,13 @@ branded_nogeneric <- df %>% filter(Appl_Type=="N" & count == 1)
 #So max follow-up time would be 10 years (length of study interest)
 branded_nogeneric <- branded_nogeneric %>% filter(min >= "2007-10-01")
 
-#Only include those with earliest patent expiration before 2017-10-01
+#Only include those with earliest patent expiration before 2017-10-01 
 #So there's risk of entry after patent expiration, not PIV
 branded_nogeneric <- branded_nogeneric %>% filter(min <= "2017-09-30")
 
 branded_nogeneric$entry1 <- 0
 branded_nogeneric$t0 <- 0
-branded_nogeneric$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(branded_nogeneric$date))
+branded_nogeneric$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(branded_nogeneric$min))
 
 #branded_nogeneric$t1[branded_nogeneric$min >= "2012-10-01"] <- as.numeric(as.Date("2017-09-30") - as.Date(branded_nogeneric$date[branded_nogeneric$min >= "2012-10-01"]))
 #branded_nogeneric$t1[branded_nogeneric$min < "2012-10-01"] <- as.numeric(as.Date("2012-09-30") - as.Date(branded_nogeneric$date[branded_nogeneric$min < "2012-10-01"]))

@@ -11,6 +11,10 @@ genericPIV$lag[genericPIV$PIV==1]<-0
 #Delete those with negative lag time???
 genericPIV<-genericPIV[genericPIV[, "lag"]>=0, ]
 
+#add restrict for index date >= 20071001
+genericPIV <- genericPIV %>%
+  filter(exclusivity >= "2007-10-01")
+
 #Update order
 genericPIV <- genericPIV %>%
   group_by(index) %>%
