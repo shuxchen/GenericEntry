@@ -12,10 +12,10 @@ ggsurvplot(model_noPIV_cox_first_unadj,
            #pval = TRUE,             # show p-value of log-rank test.
            conf.int = TRUE,         # show confidence intervals for 
            # point estimates of survival curves.
-           xlim = c(0, 6000),         # present narrower X axis, but not affect
+           xlim = c(0, 3000),         # present narrower X axis, but not affect
            palette = c("grey50", "black"),
            # survival estimates.
-           xlab = "Time to first generic entry (TT)",   # customize X axis label.
+           xlab = "Time to first generic entry",   # customize X axis label.
            break.time.by = 1500,     # break X axis in time intervals by 500.
            ggtheme = theme_light(), # customize plot and risk table with a theme.
            risk.table.y.text.col = T, # colour risk table text annotations.
@@ -78,10 +78,10 @@ ggsurvplot(model_noPIV_cox_second_unadj,
            #pval = TRUE,             # show p-value of log-rank test.
            conf.int = TRUE,         # show confidence intervals for 
            # point estimates of survival curves.
-           xlim = c(0, 6000),         # present narrower X axis, but not affect
+           xlim = c(0, 3000),         # present narrower X axis, but not affect
            palette = c("grey50", "black"),
            # survival estimates.
-           xlab = "Time to second generic entry (TT)",   # customize X axis label.
+           xlab = "Time to second generic entry",   # customize X axis label.
            break.time.by = 1500,     # break X axis in time intervals by 500.
            ggtheme = theme_light(), # customize plot and risk table with a theme.
            risk.table.y.text.col = T, # colour risk table text annotations.
@@ -152,10 +152,10 @@ ggsurvplot(model_noPIV_cox_third_unadj,
            #pval = TRUE,             # show p-value of log-rank test.
            conf.int = TRUE,         # show confidence intervals for 
            # point estimates of survival curves.
-           xlim = c(0, 6000),         # present narrower X axis, but not affect
+           xlim = c(0, 3000),         # present narrower X axis, but not affect
            palette = c("grey50", "black"),
            # survival estimates.
-           xlab = "Time to third generic entry (TT)",   # customize X axis label.
+           xlab = "Time to third generic entry",   # customize X axis label.
            break.time.by = 1500,     # break X axis in time intervals by 500.
            ggtheme = theme_light(), # customize plot and risk table with a theme.
            risk.table.y.text.col = T, # colour risk table text annotations.
