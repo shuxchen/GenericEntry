@@ -480,4 +480,5 @@ generic <- generic %>%
 generic1_index <- generic %>% group_by(index) %>% filter(order == 1 & numdate > 20071000) %>% select(index)
 generic <- inner_join(generic, generic1_index)
 
-generic <- generic %>% filter(numdate < 20171001)
+generic <- generic %>% 
+  filter(numdate < 20171001 & numdate > 20071001)
