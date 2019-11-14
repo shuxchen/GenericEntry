@@ -26,13 +26,26 @@ genericnoPIV<-generic %>% group_by(index) %>% filter(all(PIV==0))
 #  mutate(order = rank(numdate,ties.method="first"))
 
 #add restrict for index date >= 20071001
-genericPIV <- genericPIV %>% 
+genericnoPIV <- genericnoPIV %>% 
   group_by(index) %>% 
   fill(min) %>% 
   fill(min, .direction = "up")
 
 genericnoPIV <- genericnoPIV %>%
   filter(min >= "2007-10-01")
+
+genericnoPIV_origin <- genericnoPIV
+
+##add administrative censoring for pre-GDUFA index dates
+#for index date pre-GDUFA, exclude generics with entry date post-GDUFA
+genericnoPIV_preGDUFA <- genericnoPIV %>%
+  filter(min < '2012-10-01' & date < '2012-10-01')
+
+#Here, missing cases when min < '2012-10-01' and first entrant's date >='2012-10-01'; need to add branded drug as censored
+
+genericnoPIV <- genericnoPIV %>%
+  filter(min >= '2012-10-01') %>%
+  bind_rows(genericnoPIV_preGDUFA)
 
 #Calculate lag time using earliest patent
 genericnoPIV$lag <- as.Date(genericnoPIV$date)-as.Date(genericnoPIV$min)
@@ -79,20 +92,38 @@ genericnoPIV_index <- genericnoPIV %>% group_by(index) %>% summarise(count_gener
 genericnoPIV <- left_join(genericnoPIV, genericnoPIV_index)
 
 
-
 #Add branded drugs without any generic competition
 branded_nogeneric <- df %>% filter(Appl_Type=="N" & count == 1)
 #Only include those with earliest patent expiration after 2007-10-01
 #So max follow-up time would be 10 years (length of study interest)
-branded_nogeneric <- branded_nogeneric %>% filter(min >= "2007-10-01")
-
 #Only include those with earliest patent expiration before 2017-10-01 
 #So there's risk of entry after patent expiration, not PIV
-branded_nogeneric <- branded_nogeneric %>% filter(min <= "2017-09-30")
+branded_nogeneric <- branded_nogeneric %>% filter(min >= "2007-10-01" & min <= "2017-09-30")
 
 branded_nogeneric$entry1 <- 0
 branded_nogeneric$t0 <- 0
-branded_nogeneric$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(branded_nogeneric$min))
+
+branded_nogeneric_preGDUFA <- branded_nogeneric %>%
+  filter(min < '2012-10-01') 
+
+branded_nogeneric_postGDUFA <- branded_nogeneric %>%
+  filter(min >= '2012-10-01') 
+
+#Different admin censoring dates for pre and post GDUFA 
+branded_nogeneric_preGDUFA$t1 <- as.numeric(as.Date("2012-09-30") - as.Date(branded_nogeneric_preGDUFA$min))
+branded_nogeneric_postGDUFA$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(branded_nogeneric_postGDUFA$min))
+
+branded_nogeneric <- branded_nogeneric_preGDUFA %>%
+  bind_rows(branded_nogeneric_postGDUFA)
+
+#also add branded drugs with min <= 2012-10-01, but have first generic entry after this
+branded_preGDUFA <- genericnoPIV_origin %>%
+  filter(min < '2012-10-01' & date >= '2012-10-01' & order == 1)
+branded_preGDUFA$entry1 <- 0
+branded_preGDUFA$t0 <- 0
+branded_preGDUFA$t1 <- as.numeric(as.Date("2012-09-30") - as.Date(branded_preGDUFA$min))
+branded_nogeneric <- branded_nogeneric %>%
+  bind_rows(branded_preGDUFA)
 
 #branded_nogeneric$t1[branded_nogeneric$min >= "2012-10-01"] <- as.numeric(as.Date("2017-09-30") - as.Date(branded_nogeneric$date[branded_nogeneric$min >= "2012-10-01"]))
 #branded_nogeneric$t1[branded_nogeneric$min < "2012-10-01"] <- as.numeric(as.Date("2012-09-30") - as.Date(branded_nogeneric$date[branded_nogeneric$min < "2012-10-01"]))
@@ -118,13 +149,24 @@ g4 <- ggplot(ATC_noPIV, aes(x = GDUFA, y = Number, col = ATC1)) +
   geom_point()
 
 #Add censored information
+#use different admin censoring date for pre and post GDUFA 
 genericnoPIV_censor <- genericnoPIV %>% filter(order == count_generic)
 genericnoPIV_censor <- genericnoPIV_censor %>% filter(!entry1 == 0)
 genericnoPIV_censor$entry1 <- 0
 genericnoPIV_censor$ncompetitor <- genericnoPIV_censor$ncompetitor + 1
 genericnoPIV_censor$t0 <- genericnoPIV_censor$t1
 
-genericnoPIV_censor$t1<- as.numeric(as.Date("2017-09-30") - as.Date(genericnoPIV_censor$min))
+genericnoPIV_censor_preGDUFA <- genericnoPIV_censor %>%
+  filter(min < '2012-10-01') 
+
+genericnoPIV_censor_postGDUFA <- genericnoPIV_censor %>%
+  filter(min >= '2012-10-01') 
+
+genericnoPIV_censor_preGDUFA$t1<- as.numeric(as.Date("2012-09-30") - as.Date(genericnoPIV_censor_preGDUFA$min))
+genericnoPIV_censor_postGDUFA$t1<- as.numeric(as.Date("2017-09-30") - as.Date(genericnoPIV_censor_postGDUFA$min))
+
+genericnoPIV_censor <- genericnoPIV_censor_preGDUFA %>%
+  bind_rows(genericnoPIV_censor_postGDUFA)
 
 #genericnoPIV_censor$t1[genericnoPIV_censor$min >= "2012-10-01"] <- as.numeric(as.Date("2017-09-30") - as.Date(genericnoPIV_censor$min[genericnoPIV_censor$min >= "2012-10-01"]))
 #genericnoPIV_censor$t1[genericnoPIV_censor$min < "2012-10-01"] <- as.numeric(as.Date("2012-09-30") - as.Date(genericnoPIV_censor$min[genericnoPIV_censor$min < "2012-10-01"]))
@@ -133,8 +175,6 @@ genericnoPIV_censor$gaptime <- as.numeric(as.Date(genericnoPIV_censor$t1) - as.D
 
 #merge back to main dataset
 genericnoPIV <- rbind(genericnoPIV, genericnoPIV_censor)
-
-
 
 #Merge censored generic in
 genericnoPIV <- rbind(genericnoPIV, branded_nogeneric)

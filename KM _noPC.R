@@ -59,10 +59,18 @@ genericnoPIV_second <- genericnoPIV_second %>% filter((order == 1 & count_generi
 genericnoPIV_second$entry2 <- ifelse(genericnoPIV_second$order ==2, 1, 0)
 
 # recode survival time for censored first entrants
-genericnoPIV_second_1 <- genericnoPIV_second %>% 
-  filter(order == 1) %>%
+genericnoPIV_second_1_preGDUFA <- genericnoPIV_second %>% 
+  filter(order == 1 & min < "2012-10-01") %>%
+  mutate(t1 = as.numeric(as.Date("2012-09-30") - as.Date(min)),
+         gaptime = as.numeric(as.Date("2012-09-30") - as.Date(date))) 
+
+genericnoPIV_second_1_postGDUFA <- genericnoPIV_second %>% 
+  filter(order == 1 & min >= "2012-10-01") %>%
   mutate(t1 = as.numeric(as.Date("2017-09-30") - as.Date(min)),
          gaptime = as.numeric(as.Date("2017-09-30") - as.Date(date))) 
+
+genericnoPIV_second_1 <- genericnoPIV_second_1_preGDUFA %>%
+  bind_rows(genericnoPIV_second_1_postGDUFA)
 
 genericnoPIV_second <- genericnoPIV_second %>%
   filter(order == 2) %>%
@@ -133,10 +141,18 @@ genericnoPIV_third <- genericnoPIV_third %>% filter((order == 2 & count_generic 
 genericnoPIV_third$entry3 <- ifelse(genericnoPIV_third$order == 3, 1, 0)
 
 # recode survival time for censored second entrants
-genericnoPIV_third_2 <- genericnoPIV_third %>% 
-  filter(order == 2) %>%
+genericnoPIV_third_2_preGDUFA <- genericnoPIV_third %>% 
+  filter(order == 2 & min < "2012-10-01") %>%
+  mutate(t1 = as.numeric(as.Date("2012-09-30") - as.Date(min)),
+         gaptime = as.numeric(as.Date("2012-09-30") - as.Date(date))) 
+
+genericnoPIV_third_2_postGDUFA <- genericnoPIV_third %>% 
+  filter(order == 2 & min >= "2012-10-01") %>%
   mutate(t1 = as.numeric(as.Date("2017-09-30") - as.Date(min)),
          gaptime = as.numeric(as.Date("2017-09-30") - as.Date(date))) 
+
+genericnoPIV_third_2 <- genericnoPIV_third_2_preGDUFA %>%
+  bind_rows(genericnoPIV_third_2_postGDUFA)
 
 genericnoPIV_third <- genericnoPIV_third %>%
   filter(order == 3) %>%
