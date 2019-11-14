@@ -44,10 +44,18 @@ genericPIV_third <- genericPIV_third %>% filter((order == 2 & count_generic == c
 genericPIV_third$entry3 <- ifelse(genericPIV_third$order == 3, 1, 0)
 
 # recode survival time for censored second entrants
-genericPIV_third_2 <- genericPIV_third %>% 
-  filter(order == 2) %>%
+genericPIV_third_2_preGDUFA <- genericPIV_third %>% 
+  filter(order == 2 & exclusivity < "2012-10-01") %>%
+  mutate(t1 = as.numeric(as.Date("2012-09-30") - as.Date(exclusivity)),
+         gaptime = as.numeric(as.Date("2012-09-30") - as.Date(date))) 
+
+genericPIV_third_2_postGDUFA <- genericPIV_third %>% 
+  filter(order == 2 & exclusivity >= "2012-10-01") %>%
   mutate(t1 = as.numeric(as.Date("2017-09-30") - as.Date(exclusivity)),
          gaptime = as.numeric(as.Date("2017-09-30") - as.Date(date))) 
+
+genericPIV_third_2 <- genericPIV_third_2_preGDUFA %>%
+  bind_rows(genericPIV_third_2_postGDUFA)
 
 genericPIV_third <- genericPIV_third %>%
   filter(order == 3) %>%

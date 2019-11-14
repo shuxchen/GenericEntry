@@ -121,7 +121,7 @@ branded_preGDUFA <- genericnoPIV_origin %>%
   filter(min < '2012-10-01' & date >= '2012-10-01' & order == 1)
 branded_preGDUFA$entry1 <- 0
 branded_preGDUFA$t0 <- 0
-branded_preGDUFA$t1 <- as.numeric(as.Date("2012-09-30") - as.Date(branded_preGDUFA$min))
+branded_preGDUFA$gaptime <- branded_preGDUFA$t1 <- as.numeric(as.Date("2012-09-30") - as.Date(branded_preGDUFA$min))
 branded_nogeneric <- branded_nogeneric %>%
   bind_rows(branded_preGDUFA)
 

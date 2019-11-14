@@ -15,6 +15,19 @@ genericPIV<-genericPIV[genericPIV[, "lag"]>=0, ]
 genericPIV <- genericPIV %>%
   filter(exclusivity >= "2007-10-01")
 
+genericPIV_origin <- genericPIV
+
+##add administrative censoring for pre-GDUFA index dates
+#for index date pre-GDUFA, exclude generics with entry date post-GDUFA
+genericPIV_preGDUFA <- genericPIV %>%
+  filter(exclusivity < '2012-10-01' & date < '2012-10-01')
+
+#Here, missing cases when exclusivity < '2012-10-01' and second entrant's date >='2012-10-01'; need to add branded drug as censored
+
+genericPIV <- genericPIV %>%
+  filter(exclusivity >= '2012-10-01') %>%
+  bind_rows(genericPIV_preGDUFA)
+
 #Update order
 genericPIV <- genericPIV %>%
   group_by(index) %>%
@@ -69,10 +82,29 @@ genericPIV_first_only <- genericPIV_first %>% filter(count_generic == 1)
 
 #for these ones, use start time = 0, calculate stop time as "2017-09-31 - approval date"
 genericPIV_first_only$t0 <- 0
-genericPIV_first_only$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(genericPIV_first_only$date))
-genericPIV_first_only$gaptime <- as.numeric(as.Date("2017-09-30") - as.Date(genericPIV_first_only$date))
+
+genericPIV_first_only_preGDUFA <- genericPIV_first_only %>%
+  filter(exclusivity < '2012-10-01') 
+
+genericPIV_first_only_postGDUFA <- genericPIV_first_only %>%
+  filter(exclusivity >= '2012-10-01' & date >= '2012-10-01' ) 
+
+genericPIV_first_only_preGDUFA$gaptime <- genericPIV_first_only_preGDUFA$t1 <- as.numeric(as.Date("2012-09-30") - as.Date(genericPIV_first_only_preGDUFA$date))
+genericPIV_first_only_postGDUFA$gaptime <- genericPIV_first_only_postGDUFA$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(genericPIV_first_only_postGDUFA$date))
+
+genericPIV_first_only <- genericPIV_first_only_preGDUFA %>%
+  bind_rows(genericPIV_first_only_postGDUFA)
 
 genericPIV_first_only$GDUFA[genericPIV_first_only$date >= "2012-10-01" ] <- 1
+
+#also add first entrants with exclusivity <= 2012-10-01, but have second generic entry after this
+genericPIV_first_preGDUFA <- genericPIV_origin %>%
+  filter(exclusivity < '2012-10-01' & date >= '2012-10-01' & order == 2)
+genericPIV_first_preGDUFA$entry1 <- 0
+genericPIV_first_preGDUFA$t0 <- 0
+genericPIV_first_preGDUFA$gaptime <- genericPIV_first_preGDUFA$t1 <- as.numeric(as.Date("2012-09-30") - as.Date(genericPIV_first_preGDUFA$exclusivity))
+genericPIV_first_only <- genericPIV_first_only %>%
+  bind_rows(genericPIV_first_preGDUFA)
 
 #genericPIV_first_only$t1[genericPIV_first_only$exclusivity >= "2012-10-01"] <- as.numeric(as.Date("2017-09-30") - as.Date(genericPIV_first_only$date[genericPIV_first_only$exclusivity >= "2012-10-01"]))
 #genericPIV_first_only$t1[genericPIV_first_only$exclusivity < "2012-10-01"] <- as.numeric(as.Date("2012-09-30") - as.Date(genericPIV_first_only$date[genericPIV_first_only$exclusivity < "2012-10-01"]))
@@ -114,16 +146,26 @@ genericPIV$indexyear_cat <- relevel(genericPIV$indexyear_cat, ref = "2012")
 genericPIV$indexyear <- genericPIV$indexyear - 2012
 
 #Add censored information
+#use different admin censoring date for pre and post GDUFA 
 genericPIV_censor <- genericPIV %>% filter(order == count_generic)
 genericPIV_censor <- genericPIV_censor %>% filter(entry2 == 1)
 genericPIV_censor$entry2 <- 0
 genericPIV_censor$ncompetitor <- genericPIV_censor$ncompetitor + 1
+genericPIV_censor$t0 <- genericPIV_censor$t1
 
-genericPIV_censor$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(genericPIV_censor$exclusivity))
+genericPIV_censor_preGDUFA <- genericPIV_censor %>%
+  filter(exclusivity < "2012-10-01")
+genericPIV_censor_postGDUFA <- genericPIV_censor %>%
+  filter(exclusivity >= "2012-10-01")
+
+genericPIV_censor_preGDUFA$t1 <- as.numeric(as.Date("2012-09-30") - as.Date(genericPIV_censor_preGDUFA$exclusivity))
+genericPIV_censor_preGDUFA$t1 <- as.numeric(as.Date("2017-09-30") - as.Date(genericPIV_censor_postGDUFA$exclusivity))
+
+genericPIV_censor <- genericPIV_censor_preGDUFA %>%
+  bind_rows(genericPIV_censor_postGDUFA)
 
 #genericPIV_censor$t1[genericPIV_censor$exclusivity >= "2012-10-01"] <- as.numeric(as.Date("2017-09-30") - as.Date(genericPIV_censor$exclusivity[genericPIV_censor$exclusivity >= "2012-10-01"]))
 #genericPIV_censor$t1[genericPIV_censor$exclusivity < "2012-10-01"] <- as.numeric(as.Date("2012-09-30") - as.Date(genericPIV_censor$exclusivity[genericPIV_censor$exclusivity < "2012-10-01"]))
-genericPIV_censor$t0 <- genericPIV_censor$t1
 genericPIV_censor$gaptime <- as.numeric(as.Date(genericPIV_censor$t1) - as.Date(genericPIV_censor$t0))
 
 #Change folow-up time for censored cases before GDUFA.
