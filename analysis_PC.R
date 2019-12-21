@@ -301,8 +301,8 @@ genericPIV_multi_PC <- genericPIV %>%
 model_PIV_PWPTT_multi_adj <- coxph(Surv(t0, t1, entry2) ~ GDUFA*strata(ncompetitor) + route + AG + guidance_before + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV  + cluster(index), method = "breslow", data = genericPIV_multi_PC)
 summary(model_PIV_PWPTT_multi_adj)
 
-model_PIV_month_PWPGT_multi_adj <- coxph(Surv(genericPIV_multi_PC$gaptime_start, genericPIV_multi_PC$gaptime, entry2) ~ GDUFA*strata(ncompetitor) + route + AG + guidance_before + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + as.factor(month) + cluster(index), method = "breslow", data = genericPIV_multi_PC)
-summary(model_PIV_month_PWPGT_multi_adj)
+model_PIV_PWPGT_multi_adj <- coxph(Surv(genericPIV_multi_PC$gaptime_start, genericPIV_multi_PC$gaptime, entry2) ~ GDUFA*strata(ncompetitor) + route + AG + guidance_before + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericPIV_multi_PC)
+summary(model_PIV_PWPGT_multi_adj)
 
 
 ##After GDUFA, PWP-GT

@@ -12,11 +12,11 @@ ggsurvplot(model_noPIV_cox_first_unadj,
            #pval = TRUE,             # show p-value of log-rank test.
            conf.int = TRUE,         # show confidence intervals for 
            # point estimates of survival curves.
-           xlim = c(0, 3000),         # present narrower X axis, but not affect
+           xlim = c(0, 1500),         # present narrower X axis, but not affect
            palette = c("grey50", "black"),
            # survival estimates.
            xlab = "Time to first generic entry",   # customize X axis label.
-           break.time.by = 1500,     # break X axis in time intervals by 500.
+           break.time.by = 500,     # break X axis in time intervals by 500.
            ggtheme = theme_light(), # customize plot and risk table with a theme.
            risk.table.y.text.col = T, # colour risk table text annotations.
            risk.table.y.text = FALSE, # show bars instead of names in text annotations
@@ -104,11 +104,11 @@ ggsurvplot(model_noPIV_cox_second_unadj,
            #pval = TRUE,             # show p-value of log-rank test.
            conf.int = TRUE,         # show confidence intervals for 
            # point estimates of survival curves.
-           xlim = c(0, 3000),         # present narrower X axis, but not affect
+           xlim = c(0, 1500),         # present narrower X axis, but not affect
            palette = c("grey50", "black"),
            # survival estimates.
-           xlab = "Time to second generic entry (GT)",   # customize X axis label.
-           break.time.by = 1000,     # break X axis in time intervals by 500.
+           xlab = "Time to second generic entry",   # customize X axis label.
+           break.time.by = 500,     # break X axis in time intervals by 500.
            ggtheme = theme_light(), # customize plot and risk table with a theme.
            risk.table.y.text.col = T, # colour risk table text annotations.
            risk.table.y.text = FALSE, # show bars instead of names in text annotations
@@ -127,16 +127,10 @@ genericnoPIV_third_index <- genericnoPIV_third %>%
   group_by(index) %>% 
   dplyr::summarise(count_generic=n()) 
 
-genericnoPIV_second_index <- genericnoPIV_third %>% 
-  filter(order == 2) %>%
-  group_by(index) %>% 
-  dplyr::summarise(count_generic_second=n()) 
-
 genericnoPIV_third  <- genericnoPIV_third %>%
-  left_join(genericnoPIV_third_index, by = "index") %>% 
-  left_join(genericnoPIV_second_index, by = "index")
+  left_join(genericnoPIV_third_index, by = "index") 
 
-genericnoPIV_third <- genericnoPIV_third %>% filter((order == 2 & count_generic == count_generic_second) | order == 3)
+genericnoPIV_third <- genericnoPIV_third %>% filter((order == 2 & count_generic == 1) | order == 3)
 
 genericnoPIV_third$entry3 <- ifelse(genericnoPIV_third$order == 3, 1, 0)
 
@@ -162,13 +156,18 @@ genericnoPIV_third <- genericnoPIV_third %>%
 #summary(model_noPIV_cox_third)
 
 #TT
-model_noPIV_cox_third_unadj <- survfit(Surv(lag, entry3) ~ GDUFA, data = genericnoPIV_third)
-ggsurvplot(model_noPIV_cox_third_unadj,
+model_noPIV_cox_third_unadj <- survfit(coxph(Surv(t0, t1, entry3, type = "counting") ~ GDUFA, data = genericnoPIV_third))
+model_noPIV_cox_third_unadj_res <- survfit(Surv(t0, t1, entry3, type = "counting") ~ GDUFA, data = genericnoPIV_third)
+test <- Surv(genericnoPIV_third$t0, genericnoPIV_third$t1, genericnoPIV_third$entry3)
+my.fit <- survfit(test~genericnoPIV_third$GDUFA)
+survfit(model_noPIV_cox_third_unadj_res)
+plot(model_noPIV_cox_third_unadj, xlim = c(0, 150))
+ggsurvplot(model_noPIV_cox_third_unadj_res,
            #risk.table = TRUE,       # show risk table.
            #pval = TRUE,             # show p-value of log-rank test.
            conf.int = TRUE,         # show confidence intervals for 
            # point estimates of survival curves.
-           xlim = c(0, 3000),         # present narrower X axis, but not affect
+           xlim = c(0, 100),         # present narrower X axis, but not affect
            palette = c("grey50", "black"),
            # survival estimates.
            xlab = "Time to third generic entry",   # customize X axis label.
@@ -179,6 +178,21 @@ ggsurvplot(model_noPIV_cox_third_unadj,
            # in legend of risk table
            legend.labs = c("Pre-GDUFA", "Post-GDUFA")
 )
+
+test <- genericnoPIV_third %>%
+  survfit(Surv(t0, t1, entry3) ~ GDUFA, .) %>%
+  tidy()
+
+km <-
+  ggplot(test, aes(x = time, y = estimate, col = strata)) +
+  geom_step() +
+  theme_bw() +
+  #xlim(0, 24) +
+  xlab("Time in days") +
+  ylab("% entered")
+
+
+
 ##GT
 model_noPIV_cox_third_unadj <- survfit(Surv(gaptime, entry3) ~ GDUFA, data = genericnoPIV_third)
 ggsurvplot(model_noPIV_cox_third_unadj,
@@ -186,11 +200,11 @@ ggsurvplot(model_noPIV_cox_third_unadj,
            #pval = TRUE,             # show p-value of log-rank test.
            conf.int = TRUE,         # show confidence intervals for 
            # point estimates of survival curves.
-           xlim = c(0, 3000),         # present narrower X axis, but not affect
+           xlim = c(0, 1500),         # present narrower X axis, but not affect
            palette = c("grey50", "black"),
            # survival estimates.
-           xlab = "Time to third generic entry (GT)",   # customize X axis label.
-           break.time.by = 1000,     # break X axis in time intervals by 500.
+           xlab = "Time to third generic entry",   # customize X axis label.
+           break.time.by = 500,     # break X axis in time intervals by 500.
            ggtheme = theme_light(), # customize plot and risk table with a theme.
            risk.table.y.text.col = T, # colour risk table text annotations.
            risk.table.y.text = FALSE, # show bars instead of names in text annotations

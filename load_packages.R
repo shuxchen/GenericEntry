@@ -23,7 +23,9 @@
 #install.packages("AICcmodavg")
 #install.packages("scales")ll
 #install.packages("wesanderson")
+#install.packages("broom")
 
+library(broom)
 library(lubridate)
 library(plyr)
 library(tidyverse)
