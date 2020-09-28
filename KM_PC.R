@@ -20,6 +20,11 @@ ggsurvplot(model_PIV_cox_second_unadj,
            legend.labs = c("Pre-GDUFA", "Post-GDUFA")
 )
 
+figure3_df1 <- genericPIV_second %>%
+  select(gaptime, entry2, GDUFA) %>%
+  filter(!is.na(entry2))
+
+write.xlsx(figure3_df1, "figure3_PC_time_to_second_entry.xlsx")
 
 ##third entrants only (plus censored with no third entry)
 genericPIV_third <- genericPIV %>% 
@@ -98,3 +103,10 @@ ggsurvplot(model_PIV_cox_third_unadj,
            # in legend of risk table
            legend.labs = c("Pre-GDUFA", "Post-GDUFA")
 )
+
+figure3_df2 <- genericPIV_third %>%
+  select(gaptime, entry3, GDUFA) %>%
+  filter(!is.na(entry3))
+
+write.xlsx(figure3_df2, "figure3_PC_time_to_third_entry.xlsx")
+

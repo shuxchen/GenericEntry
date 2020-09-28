@@ -1,3 +1,6 @@
+load("all.RData")
+load("generic.RData")
+
 ###PIV#################################################################
 ##For each index, keep if PIV=1 
 ##This is the dataset with generic entry related to first filer entering with PIV
@@ -33,6 +36,7 @@ genericPIV <- genericPIV %>%
   group_by(index) %>%
   mutate(order = rank(numdate,ties.method="first"))
 
+save(genericPIV_origin, file = "genericPIV.RData")
 
 #Rank by time of approval for the order of entry within group: entry
 #Drugs entering at the same time would receive the same ranking/entry
@@ -180,6 +184,8 @@ genericPIV <- rbind(genericPIV, genericPIV_censor)
 genericPIV <- genericPIV %>% filter(order <= 6)
 genericPIV <- genericPIV %>% filter(ncompetitor <= 5)
 
+save(genericPIV_origin, file = "genericPIV_origian.RData")
+
 
 
 #genericPIV$indexyear <- as.numeric(genericPIV$indexyear) - 2012
@@ -309,6 +315,7 @@ summary(model_PIV_PWPGT_multi_adj)
 genericPIV_postGDUFA <- genericPIV %>% filter(exclusivity >= "2012-10-01")
 
 model_PIV_PWPGT_post <- coxph(Surv(genericPIV_postGDUFA$gaptime_start, genericPIV_postGDUFA$gaptime, entry2) ~ strata(ncompetitor) + route + AG + ATC1 + ETASU + guidance_before + indexyear + cluster(index), method = "breslow", data = genericPIV_postGDUFA)
+model_PIV_PWPGT_post <- coxph(Surv(genericPIV_postGDUFA$gaptime_start, genericPIV_postGDUFA$gaptime, entry2) ~ strata(ncompetitor) + route + AG + ETASU + guidance_before + indexyear + cluster(index), method = "breslow", data = genericPIV_postGDUFA)
 summary(model_PIV_PWPGT_post)
 
 h_test <- basehaz(model_PIV_PWPGT_post, centered = T)

@@ -36,6 +36,7 @@ genericnoPIV <- genericnoPIV %>%
 
 genericnoPIV_origin <- genericnoPIV
 
+
 ##add administrative censoring for pre-GDUFA index dates
 #for index date pre-GDUFA, exclude generics with entry date post-GDUFA
 genericnoPIV_preGDUFA <- genericnoPIV %>%
@@ -47,6 +48,7 @@ genericnoPIV <- genericnoPIV %>%
   filter(min >= '2012-10-01') %>%
   bind_rows(genericnoPIV_preGDUFA)
 
+
 #Calculate lag time using earliest patent
 genericnoPIV$lag <- as.Date(genericnoPIV$date)-as.Date(genericnoPIV$min)
 
@@ -56,13 +58,14 @@ sum(is.na(firstnoPIV$min))/nrow(firstnoPIV)
 #Delete those with negative or NA lag time
 genericnoPIV <- genericnoPIV %>% filter(lag>=0)
 
-
-
 #Update order
 genericnoPIV <- genericnoPIV %>% group_by(index) %>% arrange(numdate)
 genericnoPIV <- genericnoPIV %>%
   group_by(index) %>% 
   mutate(order = rank(numdate,ties.method="first"))
+
+save(genericnoPIV_origin, file = "genericnoPIV.RData")
+
 
 #Constructing variable for at least one entry:
 genericnoPIV$entry1 <- 1
@@ -198,6 +201,8 @@ genericnoPIV$indexyear <- genericnoPIV$indexyear - 2012
 #Keep k <= 6
 genericnoPIV <- genericnoPIV %>% filter(order <= 6)
 genericnoPIV <- genericnoPIV %>% filter(ncompetitor <= 5)
+
+save(genericnoPIV, file = "genericnoPIV.RData")
 
 
 #Start time = stop time will be excluded, try:

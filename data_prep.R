@@ -32,6 +32,9 @@ df<-df[, -c(15:16)]
 
 #Change the format of EQ...BASE
 df$Strength<- gsub("EQ ", "", df$Strength, fixed=TRUE)
+
+df$Strength<- gsub(" BASE", "", df$Strength, fixed=TRUE)
+
 #" BASE"
 ######Need to add more here to make strength consistent with NDC dataset
 
@@ -232,7 +235,9 @@ df$AG[is.na(df$AG)] <- 0
 ##Add REMS (ETASU) status
 REMS <- read_excel("~/Dropbox/Advanced Method Project/Data/FDA/REMS_Versions.xlsx")
 table(REMS$Elements_to_Assure_Safe_Use_Flag)
-ETASU <- REMS %>% filter(Elements_to_Assure_Safe_Use_Flag == 1) %>% select(REMS_Name, Version_Date)
+ETASU <- REMS %>% 
+  filter(Elements_to_Assure_Safe_Use_Flag == 1) %>% 
+  dplyr::select(REMS_Name, Version_Date)
 colnames(ETASU)[1] <- "Trade_Name"
 colnames(ETASU)[2] <- "ETASU_date"
 ETASU$ETASU <- 1
@@ -483,3 +488,7 @@ generic <- inner_join(generic, generic1_index)
 
 generic <- generic %>% 
   filter(numdate < 20171001)
+
+save(df, file = "all.RData")
+save(generic, file = "generic.RData")
+

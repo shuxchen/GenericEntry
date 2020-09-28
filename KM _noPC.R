@@ -24,6 +24,13 @@ ggsurvplot(model_noPIV_cox_first_unadj,
            legend.labs = c("Pre-GDUFA", "Post-GDUFA")
 )
 
+figure3_df3 <- genericnoPIV_first %>%
+  select(gaptime, entry1, GDUFA) %>%
+  filter(!is.na(entry1))
+
+write.xlsx(figure3_df3, "figure3_noPC_time_to_first_entry.xlsx")
+
+
 model_noPIV_cox_first <- coxph(Surv(gaptime, entry1) ~ GDUFA + route + AG + ATC1 + ETASU + guidance_before + indexyear, method = "breslow", data = genericnoPIV_first)
 summary(model_noPIV_cox_first)
 
@@ -115,6 +122,12 @@ ggsurvplot(model_noPIV_cox_second_unadj,
            # in legend of risk table
            legend.labs = c("Pre-GDUFA", "Post-GDUFA")
 )
+
+figure3_df4 <- genericnoPIV_second %>%
+  select(gaptime, entry2, GDUFA) %>%
+  filter(!is.na(entry2))
+
+write.xlsx(figure3_df4, "figure3_noPC_time_to_second_entry.xlsx")
 
 
 ##third entrants only (plus censored with no third entry)
@@ -211,3 +224,9 @@ ggsurvplot(model_noPIV_cox_third_unadj,
            # in legend of risk table
            legend.labs = c("Pre-GDUFA", "Post-GDUFA")
 )
+
+figure3_df5 <- genericnoPIV_third %>%
+  select(gaptime, entry3, GDUFA) %>%
+  filter(!is.na(entry3))
+
+write.xlsx(figure3_df5, "figure3_noPC_time_to_third_entry.xlsx")
