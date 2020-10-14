@@ -25,12 +25,26 @@ genericnoPIV<-generic %>% group_by(index) %>% filter(all(PIV==0))
 #  group_by(index) %>%
 #  mutate(order = rank(numdate,ties.method="first"))
 
-#add restrict for index date >= 20071001
 genericnoPIV <- genericnoPIV %>% 
   group_by(index) %>% 
   fill(min) %>% 
   fill(min, .direction = "up")
 
+# re-calculate index date, by using min(earliest generic entry, earliest patent expiration date)
+genericnoPIV_min_approvedate <- genericnoPIV %>% 
+  group_by(index) %>% 
+  summarise(min_generic = min(date))
+
+#merge back 
+#compare min and min_generic, use the smaller one; also fill NA patent expiry with earliest generic entry date
+genericnoPIV <- genericnoPIV %>% 
+  left_join(genericnoPIV_min_approvedate) %>%
+  mutate(min_new = dplyr::if_else(is.na(min) | as.Date(min) > as.Date(min_generic), as.Date(min_generic), as.Date(min))) %>%
+  dplyr::select(-min_generic, -min) %>%
+  rename(min = min_new)
+
+
+#add restrict for index date >= 20071001
 genericnoPIV <- genericnoPIV %>%
   filter(min >= "2007-10-01")
 
@@ -177,6 +191,8 @@ genericnoPIV_censor <- genericnoPIV_censor_preGDUFA %>%
 genericnoPIV_censor$gaptime <- as.numeric(as.Date(genericnoPIV_censor$t1) - as.Date(genericnoPIV_censor$t0))
 
 #merge back to main dataset
+save(genericnoPIV, file = "genericnoPIV_nocensor.RData")
+
 genericnoPIV <- rbind(genericnoPIV, genericnoPIV_censor)
 
 #Merge censored generic in
@@ -203,7 +219,6 @@ genericnoPIV <- genericnoPIV %>% filter(order <= 6)
 genericnoPIV <- genericnoPIV %>% filter(ncompetitor <= 5)
 
 save(genericnoPIV, file = "genericnoPIV.RData")
-
 
 #Start time = stop time will be excluded, try:
 genericnoPIV$t1[genericnoPIV$t0 == genericnoPIV$t1] <- as.numeric(genericnoPIV$t1[genericnoPIV$t0 == genericnoPIV$t1]) + 0.001
@@ -308,4 +323,8 @@ summary(model_noPIV_PWPTT_ACA_adj)
 
 model_noPIV_PWPGT_ACA_adj <- coxph(Surv(genericnoPIV$gaptime_start, gaptime, entry1) ~ GDUFA*strata(ncompetitor) + route + AG + ETASU + guidance_before + indexyear + ACA + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericnoPIV)
 summary(model_noPIV_PWPGT_ACA_adj)
+
+genericnoPIV_postGDUFA <- genericnoPIV %>%
+  filter(min >= "2012-10-01")
+save(genericnoPIV_postGDUFA, file = "genericnoPIV_postGDUFA.RData")
 

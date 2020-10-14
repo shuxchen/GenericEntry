@@ -157,7 +157,9 @@ df <- df %>% group_by(index) %>% fill(latestexclusivity) %>% fill(latestexclusiv
 #df <- df %>% group_by(index) %>% filter(!any(is.na(patent)))
 
 ##Among all patent/exclusivity expiration dates, get the earliest and latest dates
+#df <- df %>% mutate(min = pmin(as.Date(patent), as.Date(earliestexclusivity)))
 df <- df %>% mutate(min = pmin(as.Date(patent), as.Date(earliestexclusivity)))
+
 df <- df %>% mutate(max = pmin(as.Date(latestpatent), as.Date(latestexclusivity)))
 
 df$min[is.na(df$min) & is.na(df$earliestexclusivity)] <- as.Date(df$patent[is.na(df$min) & is.na(df$earliestexclusivity)])
@@ -165,6 +167,9 @@ df$min[is.na(df$min) & is.na(df$patent)] <- as.Date(df$earliestexclusivity[is.na
 
 df$max[is.na(df$max) & is.na(df$latestexclusivity)] <- as.Date(df$latestpatent[is.na(df$max) & is.na(df$latestexclusivity)])
 df$max[is.na(df$max) & is.na(df$latestpatent)] <- as.Date(df$latestexclusivity[is.na(df$max) & is.na(df$latestpatent)])
+
+#df <- df %>% mutate(min = pmin(as.Date(min), as.Date(date)))
+
 
 #incorporate AG infomation
 library(readxl)
@@ -270,7 +275,7 @@ guidance$Appl_No <- str_pad(guidance$Appl_No, 6, pad = "0")
 
 colnames(guidance)[which(names(guidance) == "Date")] <- "date_guidance"
 
-guidance <- guidance %>% select(Appl_No, date_guidance)
+guidance <- guidance %>% dplyr::select(Appl_No, date_guidance)
 
 #Add to main dataset
 df <- left_join(df, guidance, by = "Appl_No")
@@ -297,7 +302,7 @@ ggplot(data = size, aes(x = ANDAnum)) +
   xlab("Number of Approved ANDAs") +
   ylab("Percentage")
 
-size <- size %>% select(1:2)
+size <- size %>% dplyr::select(1:2)
 df <- left_join(df, size)
 table(df$Tier)
 
@@ -483,7 +488,7 @@ generic <- generic %>%
 #in specific, first generic need to be after 2007-10-01
 #while all need to be before 2017-10-01
 #also need to restrict to index date on or after 2007-10-01; will update in PC and noPC files
-generic1_index <- generic %>% group_by(index) %>% filter(order == 1 & numdate > 20071000) %>% select(index)
+generic1_index <- generic %>% group_by(index) %>% filter(order == 1 & numdate > 20071000) %>% dplyr::select(index)
 generic <- inner_join(generic, generic1_index)
 
 generic <- generic %>% 

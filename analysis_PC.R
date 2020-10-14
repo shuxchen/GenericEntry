@@ -11,6 +11,10 @@ require(tidyverse)
 genericPIV <- genericPIV %>% group_by(index) %>% fill(exclusivity) %>% fill(exclusivity, .direction = "up")
 genericPIV$lag<-as.Date(genericPIV$date)-as.Date(genericPIV$exclusivity)
 genericPIV$lag[genericPIV$PIV==1]<-0
+
+#if PIV date before exclusivity, use exclusivity end date instead (replace)
+genericPIV$date[genericPIV$PIV==1]<-genericPIV$exclusivity
+
 #Delete those with negative lag time???
 genericPIV<-genericPIV[genericPIV[, "lag"]>=0, ]
 
@@ -175,10 +179,13 @@ genericPIV_censor$gaptime <- as.numeric(as.Date(genericPIV_censor$t1) - as.Date(
 #Change folow-up time for censored cases before GDUFA.
 
 
+save(genericPIV, file = "genericPIV_nocensor.RData")
 
 
 #merge back to main dataset
 genericPIV <- rbind(genericPIV, genericPIV_censor)
+
+
 
 #Keep k <= 6
 genericPIV <- genericPIV %>% filter(order <= 6)
@@ -313,6 +320,7 @@ summary(model_PIV_PWPGT_multi_adj)
 
 ##After GDUFA, PWP-GT
 genericPIV_postGDUFA <- genericPIV %>% filter(exclusivity >= "2012-10-01")
+save(genericPIV_postGDUFA, file = "genericPIV_postGDUFA.Rdata")
 
 model_PIV_PWPGT_post <- coxph(Surv(genericPIV_postGDUFA$gaptime_start, genericPIV_postGDUFA$gaptime, entry2) ~ strata(ncompetitor) + route + AG + ATC1 + ETASU + guidance_before + indexyear + cluster(index), method = "breslow", data = genericPIV_postGDUFA)
 model_PIV_PWPGT_post <- coxph(Surv(genericPIV_postGDUFA$gaptime_start, genericPIV_postGDUFA$gaptime, entry2) ~ strata(ncompetitor) + route + AG + ETASU + guidance_before + indexyear + cluster(index), method = "breslow", data = genericPIV_postGDUFA)
