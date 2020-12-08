@@ -37,11 +37,11 @@ genericnoPIV_min_approvedate <- genericnoPIV %>%
 
 #merge back 
 #compare min and min_generic, use the smaller one; also fill NA patent expiry with earliest generic entry date
-genericnoPIV <- genericnoPIV %>% 
-  left_join(genericnoPIV_min_approvedate) %>%
-  mutate(min_new = dplyr::if_else(is.na(min) | as.Date(min) > as.Date(min_generic), as.Date(min_generic), as.Date(min))) %>%
-  dplyr::select(-min_generic, -min) %>%
-  rename(min = min_new)
+#genericnoPIV <- genericnoPIV %>% 
+#  left_join(genericnoPIV_min_approvedate) %>%
+#  mutate(min_new = dplyr::if_else(is.na(min) | as.Date(min) > as.Date(min_generic), as.Date(min_generic), as.Date(min))) %>%
+#  dplyr::select(-min_generic, -min) %>%
+#  rename(min = min_new)
 
 
 #add restrict for index date >= 20071001
@@ -220,6 +220,58 @@ genericnoPIV <- genericnoPIV %>% filter(ncompetitor <= 5)
 
 save(genericnoPIV, file = "genericnoPIV.RData")
 
+genericnoPIV_1 <- genericnoPIV %>%
+  filter(ncompetitor == 0)
+
+genericnoPIV_2 <- genericnoPIV %>%
+  filter(ncompetitor == 1)
+
+genericnoPIV_3 <- genericnoPIV %>%
+  filter(ncompetitor == 2)
+
+genericnoPIV_1 %>% 
+  group_by(GDUFA, entry1) %>% 
+  count()
+
+genericnoPIV_1 <- genericnoPIV_1 %>%
+  mutate(max_followup = ifelse(GDUFA == 1, as.numeric(as.Date("2017-09-30") - as.Date(min)), as.numeric(as.Date("2012-09-30") - as.Date(min))))
+
+genericnoPIV_1_n <- genericnoPIV_1 %>%
+  group_by(indexyear) %>%
+  summarise(n_risk = n()) 
+
+genericnoPIV_1 <- genericnoPIV_1 %>%
+  left_join(genericnoPIV_1_n)
+
+logit_noPIV_1 <- glm(entry1 ~ GDUFA + max_followup + n_risk + route + ETASU + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV, data = genericnoPIV_1, family = binomial())
+summary(logit_noPIV_1)
+
+genericnoPIV_2 <- genericnoPIV_2 %>%
+  mutate(max_followup = ifelse(GDUFA == 1, as.numeric(as.Date("2017-09-30") - as.Date(min)), as.numeric(as.Date("2012-09-30") - as.Date(min))))
+
+genericnoPIV_2_n <- genericnoPIV_2 %>%
+  group_by(indexyear) %>%
+  summarise(n_risk = n()) 
+
+genericnoPIV_2 <- genericnoPIV_2 %>%
+  left_join(genericnoPIV_2_n)
+
+logit_noPIV_2 <- glm(entry1 ~ GDUFA + max_followup + n_risk + AG + route + ETASU + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV, data = genericnoPIV_2, family = binomial())
+summary(logit_noPIV_2)
+
+genericnoPIV_3 <- genericnoPIV_3 %>%
+  mutate(max_followup = ifelse(GDUFA == 1, as.numeric(as.Date("2017-09-30") - as.Date(min)), as.numeric(as.Date("2012-09-30") - as.Date(min))))
+
+genericnoPIV_3_n <- genericnoPIV_3 %>%
+  group_by(indexyear) %>%
+  summarise(n_risk = n()) 
+
+genericnoPIV_3 <- genericnoPIV_3 %>%
+  left_join(genericnoPIV_3_n)
+
+logit_noPIV_3 <- glm(entry1 ~ GDUFA + max_followup + n_risk + AG + route + ETASU + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV, data = genericnoPIV_3, family = binomial())
+summary(logit_noPIV_3)
+
 #Start time = stop time will be excluded, try:
 genericnoPIV$t1[genericnoPIV$t0 == genericnoPIV$t1] <- as.numeric(genericnoPIV$t1[genericnoPIV$t0 == genericnoPIV$t1]) + 0.001
 
@@ -235,21 +287,59 @@ model_noPIV_PWPTT_unadj <- coxph(Surv(t0, t1, entry1) ~ GDUFA*strata(ncompetitor
 summary(model_noPIV_PWPTT_unadj)
 
 model_noPIV_PWPTT_adj <- coxph(Surv(t0, t1, entry1) ~ GDUFA*strata(ncompetitor) + route + AG + ETASU + guidance_before  + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericnoPIV)
-#model_noPIV_PWPTT_adj <- coxph(Surv(t0, t1, entry1) ~ (GDUFA + route + AG + ATC1 + ETASU + guidance_before  + indexyear)*strata(ncompetitor) + cluster(index), method = "breslow", data = genericnoPIV)
+#model_noPIV_PWPTT_adj <- coxph(Surv(t0, t1, entry1) ~ (GDUFA + route + AG + ETASU + guidance_before  + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV)*strata(ncompetitor) + cluster(index), method = "breslow", data = genericnoPIV)
 summary(model_noPIV_PWPTT_adj)
 
 
 #Stratified PWP-GT
 genericnoPIV$gaptime_start <- 0
 genericnoPIV$gaptime[genericnoPIV$gaptime == 0] <- as.numeric(genericnoPIV$gaptime[genericnoPIV$gaptime == 0]) + 0.001
+genericnoPIV$t1[genericnoPIV$t0 == genericnoPIV$t1] <- t1 + 0.001
 
 model_noPIV_PWPGT_unadj <- coxph(Surv(genericnoPIV$gaptime_start, gaptime, entry1) ~ GDUFA*strata(ncompetitor) + cluster(index), method = "breslow", data = genericnoPIV)
 summary(model_noPIV_PWPGT_unadj)
 
 model_noPIV_PWPGT_adj <- coxph(Surv(genericnoPIV$gaptime_start, gaptime, entry1) ~ GDUFA*strata(ncompetitor) + route + AG + ETASU + guidance_before + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericnoPIV)
-#model_noPIV_PWPGT_adj <- coxph(Surv(genericnoPIV$gaptime_start, gaptime, entry1) ~ (GDUFA + route + AG + ATC1 + ETASU + guidance_before + indexyear)*strata(ncompetitor) + cluster(index), method = "breslow", data = genericnoPIV)
+#model_noPIV_PWPGT_adj <- coxph(Surv(genericnoPIV$gaptime_start, gaptime, entry1) ~ (GDUFA + route + AG + guidance_before + ETASU + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV )*strata(ncompetitor) + cluster(index), method = "breslow", data = genericnoPIV)
+
 
 summary(model_noPIV_PWPGT_adj)
+
+genericnoPIV_1$gaptime_start <- 0
+genericnoPIV_1$gaptime[genericnoPIV_1$gaptime == 0] <- as.numeric(genericnoPIV_1$gaptime[genericnoPIV_1$gaptime == 0]) + 0.001
+genericnoPIV_1$t1[genericnoPIV_1$t1 == 0] <- 0.001
+
+model_noPIV_PWPGT_1_adj <- coxph(Surv(gaptime_start, gaptime, entry1) ~ GDUFA + route + AG + guidance_before + ETASU + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericnoPIV_1)
+
+summary(model_noPIV_PWPGT_1_adj)
+
+model_noPIV_PWPTT_1_adj <- coxph(Surv(t0, t1, entry1) ~ GDUFA + route + AG + guidance_before + ETASU + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericnoPIV_1)
+
+summary(model_noPIV_PWPTT_1_adj)
+
+genericnoPIV_2$gaptime_start <- 0
+genericnoPIV_2$gaptime[genericnoPIV_2$gaptime == 0] <- as.numeric(genericnoPIV_2$gaptime[genericnoPIV_2$gaptime == 0]) + 0.001
+genericnoPIV_2$t1[genericnoPIV_2$t1 == 0] <- 0.001
+
+model_noPIV_PWPGT_2_unadj <- coxph(Surv(gaptime_start, gaptime, entry1) ~ GDUFA, method = "breslow", data = genericnoPIV_2)
+
+summary(model_noPIV_PWPGT_2_unadj)
+
+model_noPIV_PWPGT_2_adj <- coxph(Surv(gaptime_start, gaptime, entry1) ~ GDUFA + route + AG + guidance_before + ETASU + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericnoPIV_2)
+
+summary(model_noPIV_PWPGT_2_adj)
+
+genericnoPIV_3$gaptime_start <- 0
+genericnoPIV_3$gaptime[genericnoPIV_3$gaptime == 0] <- as.numeric(genericnoPIV_3$gaptime[genericnoPIV_3$gaptime == 0]) + 0.001
+genericnoPIV_3$t1[genericnoPIV_3$t1 == 0] <- 0.001
+
+model_noPIV_PWPGT_3_unadj <- coxph(Surv(gaptime_start, gaptime, entry1) ~ GDUFA, method = "breslow", data = genericnoPIV_3)
+
+summary(model_noPIV_PWPGT_3_unadj)
+
+model_noPIV_PWPGT_3_adj <- coxph(Surv(gaptime_start, gaptime, entry1) ~ GDUFA + route + AG + guidance_before + ETASU + indexyear + ATCA + ATCB + ATCC + ATCD + ATCG + ATCH + ATCG +ATCL + ATCM + ATCN + ATCP + ATCR + ATCS + ATCV + cluster(index), method = "breslow", data = genericnoPIV_3)
+
+summary(model_noPIV_PWPGT_3_adj)
 
 
 #Model with # of competitors not in strata
